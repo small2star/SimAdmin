@@ -848,7 +848,7 @@ fn sms_storage_cache_entry_for_identity(
 /// 缓存的存储条目若无 total（此前抓取失败写入的 "empty" 占位），视为不完整。
 /// 仅用于后台刷新流程内部的重试判断；不影响 sim_details_cache_missing 的
 /// 自动触发语义（空占位在 ICCID 变化前不重复触发探测）。
-fn sms_storage_cache_incomplete(db: &Database, identity: &SimIdentity) -> bool {
+pub fn sms_storage_cache_incomplete(db: &Database, identity: &SimIdentity) -> bool {
     sms_storage_cache_entry_for_identity(db, identity)
         .map(|entry| entry.sms_total.is_none())
         .unwrap_or(true)
@@ -6825,4 +6825,5 @@ pub async fn data_connection_watchdog(
         }
     }
 }
+
 

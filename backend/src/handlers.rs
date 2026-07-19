@@ -1,4 +1,4 @@
-//! API 处理器模块 (ModemManager 版)
+﻿//! API 处理器模块 (ModemManager 版)
 //!
 //! 包含所有 HTTP API 的处理函数
 
@@ -35,7 +35,7 @@ use crate::{
         refresh_sim_details_background, register_operator_auto, register_operator_manual,
         restart_baseband, scan_operators, send_sms, set_airplane_mode, set_apn_on_bearer,
         set_band_lock, set_call_waiting, set_data_connection_with_apn, set_radio_mode,
-        sim_details_cache_missing, start_cell_monitoring, stop_cell_monitoring,
+        sim_details_cache_missing, sms_storage_cache_incomplete, start_cell_monitoring, stop_cell_monitoring,
     },
     state::AppState,
     system_event::{
@@ -1353,7 +1353,7 @@ fn maybe_refresh_sim_details_after_fast_response(
         return;
     }
     let identity = sim_identity_from_response(data);
-    if !sim_details_cache_missing(db, &identity) {
+    if !sim_details_cache_missing(db, &identity) && !sms_storage_cache_incomplete(db, &identity) {
         return;
     }
     let conn_bg = Arc::clone(conn);
@@ -4494,3 +4494,5 @@ mod tests {
         assert_eq!(temperature_sensor_label("wifi_sensor", ""), "Wi-Fi");
     }
 }
+
+
