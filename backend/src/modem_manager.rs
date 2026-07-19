@@ -854,6 +854,19 @@ pub fn sms_storage_cache_incomplete(db: &Database, identity: &SimIdentity) -> bo
         .unwrap_or(true)
 }
 
+/// 检查缓存是否超过 60 分钟未刷新，用于后台自动重新查询 CPMS
+fn sms_storage_cache_stale(db: &Database, identity: &SimIdentity) -> bool {
+    let Some(entry) = sms_storage_cache_entry_for_identity(db, identity) else {
+        return true;
+    };
+    let Ok(updated) = chrono::DateTime::parse_from_rfc3339(&entry.updated_at) else {
+        return true;
+    };
+    let elapsed = chrono::Utc::now().signed_duration_since(updated);
+    elapsed.num_minutes() >= 60
+}
+
+
 fn cache_sms_storage_for_identity(
     db: &Database,
     identity: &SimIdentity,
@@ -1879,7 +1892,7 @@ async fn refresh_sim_details_background_inner(conn: &Connection, db: &Database, 
         cache_smsc_for_identity(db, &identity, &sms_center, source);
     }
 
-    if force || sms_storage_cache_incomplete(db, &identity) {
+    if force || sms_storage_cache_incomplete(db, &identity) || sms_storage_cache_stale(db, &identity) {
         let mut storage = None;
         if let Some(path) = modem_path.as_deref() {
             if let Ok(output) = send_at_via_modem_command(conn, path, "AT+CPMS?").await {
